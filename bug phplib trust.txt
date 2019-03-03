@@ -1,0 +1,3 @@
+Bug Trust/Model:
+- data_info
+- abis insert, kalo mau langsung ado update, error karena ndak ado old_vals
