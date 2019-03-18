@@ -85,7 +85,8 @@ class TableComposer {
   }
   public function index() {
     $col = $this->lastCol;
-    $this->indexes[] = "CREATE INDEX idx_$col"."_$this->tableName ON $this->tableName USING BTREE ($col);";
+    if (DB::$driver === 'pgsql') $this->indexes[] = "CREATE INDEX idx_$col"."_$this->tableName ON $this->tableName USING BTREE ($col);";
+    elseif (DB::$driver === 'mysql') $this->indexes[] = "CREATE INDEX idx_$col"."_$this->tableName ON $this->tableName ($col);";
     return $this;
   }
   public function ginPropIndex($props) { //Not supported in mysql
@@ -110,7 +111,7 @@ class TableComposer {
       $this->columns[] = "{$this->lastCol}_{$v['name']} {$v['type']} AS ($this->lastCol->>\"$v[path]\")";
 //      $this->indexes[] = "ALTER TABLE $this->tableName ADD {$this->lastCol}_{$v['name']} $v[type] "
 //              . "AS ($this->lastCol->>\"$v[path]\")";
-      $this->indexes[] = "CREATE INDEX idx_{$this->lastCol}_{$v['name']}_{$this->tableName} ON $this->tableName USING BTREE ($this->lastCol);";
+      $this->indexes[] = "CREATE INDEX idx_{$this->lastCol}_{$v['name']}_{$this->tableName} ON $this->tableName ($this->lastCol);";
     }
     return $this;
   }
