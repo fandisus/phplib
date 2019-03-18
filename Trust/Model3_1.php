@@ -2,8 +2,10 @@
 namespace Trust;
 use Trust\DB;
 abstract class Model3_1 { //Tambah jsonColumns
+  //TODO for Model3_2: Update getPublicProps pake array_keys, biar foreachnya lebih sederhana.
+  //multiInsert sudah berhasil di ikreports. Tapi mungkin perlu disempurnakan lebih lanjut.
   //Dibanding Model2: jsonColumns belum supported.
-  //Fungsi yang belum support: multiInsert, delWhere, where, allWhere, count, countWhere
+  //Fungsi yang belum support: delWhere, where, allWhere, count, countWhere
   protected $_oldVals;
   protected abstract static function tableName();
   protected abstract static function PK();
@@ -115,6 +117,40 @@ abstract class Model3_1 { //Tambah jsonColumns
       DB::exec($sql, $bindings);
     }
   }
+  public static function multiInsert(&$objects, $batchSize=10000) { //Pake byref biar hemat memory
+    //cols sesuai kiriman di $objects, dan ndak dijson_encode di sini. Ke depan perlu dipertimbangkan untuk encode di sini.
+    $columnList = array_keys(self::getPublicProps()); //TODO: Later when getPublicProps is a flat array (no keys), remove array_keys
+//    $temp_cols = [];
+//    foreach ($objects[0] as $k=>$v) $temp_cols[]=$k;
+    $sql = "INSERT INTO \"".static::tableName()."\" (\"".implode("\",\"", $columnList)."\") VALUES ";
+    if (DB::$driver === 'mysql') $sql = str_replace ('"', '`', $sql);
+    
+    if (DB::$driver === 'pgsql') {
+    foreach ($objects as $i=>$obj) {
+      foreach ($obj as $key=>$val) if (gettype($val) == "boolean") $objects[$i][$key] = ($val) ? 'true' : '0';
+    }
+    }
+    
+    DB::init(true); //force: true, Di init duluan, biar pdo->quote berjalan lancar sesuai driver.
+    $idx=0; $sqls=[]; $vals=[];$count=count($objects);
+    while ($idx < $count) {
+      $o = $objects[$idx++];
+      $vals = [];
+      foreach ($columnList as $col) $vals[]=($o->$col === null) ? 'NULL' : DB::$pdo->quote($o->$col);
+      $strVals[]='('. implode(',', $vals). ')';
+      if ($idx % $batchSize == 0) {
+        $sqls[] = $sql.implode(',', $strVals);
+        $strVals=[];
+      }
+    }
+    $sqls[] = $sql.implode(',', $strVals);
+    try {
+      foreach ($sqls as $s) { \Trust\DB::exec($s,[]); }
+    } catch (Exception $ex) {
+      throw $ex;
+    }
+  }
+  
   public function update() {
     if (!static::hasSerial()) $this->checkPKForUpdate();
     $diff = \Trust\Basic::objDiff($this->_oldVals, $this);
