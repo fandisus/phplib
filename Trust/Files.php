@@ -67,14 +67,14 @@ class Files {
     }
     closedir($dir);
   }
-  static function recurse_delete($filefolder) {
+  static function recurse_delete($filefolder, $contentOnly=false) {
     if (!file_exists($filefolder)) return;
     if (is_dir($filefolder)) {
       foreach(glob("{$filefolder}/*") as $file) {
         if(is_dir($file)) self::recurse_delete($file);
         else unlink($file);
       }
-      rmdir($filefolder);
+      if (!$contentOnly) rmdir($filefolder);
     } else unlink($filefolder);
   }
 
