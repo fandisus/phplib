@@ -111,7 +111,7 @@ class TableComposer {
       $this->columns[] = "{$this->lastCol}_{$v['name']} {$v['type']} AS ($this->lastCol->>\"$v[path]\")";
 //      $this->indexes[] = "ALTER TABLE $this->tableName ADD {$this->lastCol}_{$v['name']} $v[type] "
 //              . "AS ($this->lastCol->>\"$v[path]\")";
-      $this->indexes[] = "CREATE INDEX idx_{$this->lastCol}_{$v['name']}_{$this->tableName} ON $this->tableName ($this->lastCol);";
+      $this->indexes[] = "CREATE INDEX idx_{$this->lastCol}_{$v['name']}_{$this->tableName} ON $this->tableName ({$this->lastCol}_{$v['name']});";
     }
     return $this;
   }
