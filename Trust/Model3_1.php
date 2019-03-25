@@ -146,6 +146,7 @@ abstract class Model3_1 { //Tambah jsonColumns
       $vals = [];
       foreach ($columnList as $col) $vals[]=($o->$col === null) ? 'NULL' : DB::$pdo->quote($o->$col);
       $strVals[]='('. implode(',', $vals). ')';
+      if ($JSONConvert) foreach (static::jsonColumns() as $col) $o->$col = json_decode($o->$col);
       if ($idx % $batchSize == 0) {
         if ($idx == $count) break;
         $sqls[] = $sql.implode(',', $strVals);
