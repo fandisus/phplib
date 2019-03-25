@@ -127,9 +127,13 @@ abstract class Model3_1 { //Tambah jsonColumns
     $sql = "INSERT INTO \"".static::tableName()."\" (\"".implode("\",\"", $columnList)."\") VALUES ";
     if (DB::$driver === 'mysql') $sql = str_replace ('"', '`', $sql);
     
-    if (DB::$driver === 'pgsql') {
-      foreach ($objects as $i=>$obj) {
-        foreach ($obj as $key=>$val) if (gettype($val) == "boolean") $objects[$i][$key] = ($val) ? 'true' : '0';
+    if (DB::$driver == 'pgsql') {
+      foreach ($objects as &$obj) {
+        foreach ($obj as &$val) if (gettype($val) == "boolean") $val = ($val) ? 'true' : '0';
+      }
+    } elseif (DB::$driver == 'mysql') {
+      foreach ($objects as &$obj) {
+        foreach ($obj as &$val) if (gettype($val) == "boolean") $val = ($val) ? 1 : 0;
       }
     }
     
