@@ -117,7 +117,9 @@ abstract class Model3_1 { //Tambah jsonColumns
       DB::exec($sql, $bindings);
     }
   }
-  public static function multiInsert(&$objects, $batchSize=10000) { //Pake byref biar hemat memory
+  public static function multiInsert(&$objects, $batchSize=10000, $JSONConvert=false) { //Pake byref biar hemat memory
+    $count=count($objects);
+    if ($count === 0) throw new \Exception('No object to insert.');
     //cols sesuai kiriman di $objects, dan ndak dijson_encode di sini. Ke depan perlu dipertimbangkan untuk encode di sini.
     $columnList = array_keys(self::getPublicProps()); //TODO: Later when getPublicProps is a flat array (no keys), remove array_keys
 //    $temp_cols = [];
@@ -126,19 +128,22 @@ abstract class Model3_1 { //Tambah jsonColumns
     if (DB::$driver === 'mysql') $sql = str_replace ('"', '`', $sql);
     
     if (DB::$driver === 'pgsql') {
-    foreach ($objects as $i=>$obj) {
-      foreach ($obj as $key=>$val) if (gettype($val) == "boolean") $objects[$i][$key] = ($val) ? 'true' : '0';
-    }
+      foreach ($objects as $i=>$obj) {
+        foreach ($obj as $key=>$val) if (gettype($val) == "boolean") $objects[$i][$key] = ($val) ? 'true' : '0';
+      }
     }
     
     DB::init(true); //force: true, Di init duluan, biar pdo->quote berjalan lancar sesuai driver.
-    $idx=0; $sqls=[]; $vals=[];$count=count($objects);
+    $idx=0; $sqls=[]; $vals=[];
+    $strVals = [];
     while ($idx < $count) {
       $o = $objects[$idx++];
+      if ($JSONConvert) foreach (static::jsonColumns() as $col) $o->$col = json_encode($o->$col);
       $vals = [];
       foreach ($columnList as $col) $vals[]=($o->$col === null) ? 'NULL' : DB::$pdo->quote($o->$col);
       $strVals[]='('. implode(',', $vals). ')';
       if ($idx % $batchSize == 0) {
+        if ($idx == $count) break;
         $sqls[] = $sql.implode(',', $strVals);
         $strVals=[];
       }
