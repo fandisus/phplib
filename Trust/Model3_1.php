@@ -192,14 +192,20 @@ abstract class Model3_1 { //Tambah jsonColumns
   public function assign($obj) {
     foreach (static::getPublicProps() as $k=>$v) if (isset($obj->$k)) $this->$k = $obj->$k;
   }
+  //This allWithOldVals is for getting $_oldVals when using all and allPlus.
+  //Be careful with usage. Must to set it to false again after each usage.
+  //If not set to false, will affect future queries of sibling classes.
+  protected static $_allWithOldVals = false;
+  public static function setAllWithOldVals($boolVal) { self::$_allWithOldVals = $boolVal; }
+  public static function getAllWithOldVals() { return self::$_allWithOldVals; }
   
   public static function all($cols='*', $bindings=[]) {
     $rows = DB::get("SELECT $cols FROM ".static::tableName(),$bindings);
-    return array_map(function($r) { return static::loadDbRow($r); }, $rows);
+    return array_map(function($r) { return static::loadDbRow($r, self::$_allWithOldVals); }, $rows);
   }
   public static function allPlus($moreQuery, $cols='*', $bindings=[]) {
     $rows = DB::get("SELECT $cols FROM ".static::tableName()." $moreQuery", $bindings);
-    return array_map(function($r) { return static::loadDbRow($r); }, $rows);
+    return array_map(function($r) { return static::loadDbRow($r, self::$_allWithOldVals); }, $rows);
   }
   public static function count() {
     return DB::getOneVal('SELECT COUNT(*) FROM '.static::tableName());

@@ -62,7 +62,7 @@ class Basic {
   static function objDiff($old,$new) {
     $hasil = [];
     foreach ($old as $k=>$v) {
-      if (!isset($new->$k)) { $hasil['_removedFields'][] = $k; continue; }
+      if (!property_exists($new, $k)) { $hasil['_removedFields'][] = $k; continue; }
       if ($old->$k == $new->$k) continue;
       //Every change types, including standard primitives
       $diff = new \stdClass();
@@ -86,7 +86,7 @@ class Basic {
       } else { //Standard primitive
       }
     }
-    foreach ($new as $k=>$v) { if (!isset($old->$k)) $hasil['_addedFields'][] = $k; }
+    foreach ($new as $k=>$v) { if (!property_exists($old, $k)) $hasil['_addedFields'][] = $k; }
     return $hasil;
   }
   //Untuk olah hasil fungsi objDiff di atas.
