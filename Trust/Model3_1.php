@@ -169,7 +169,7 @@ abstract class Model3_1 { //Tambah jsonColumns
   //- Kalau pakai if (!property_exists), nak ignore jadi ndak biso.
   //Solution: Buat parameter ignores, dan targets
   //ignores untuk menentukan kolom yang diabaikan. Targets untuk menentukan HANYA kolom target yang mau diupdate.
-  public function update($ignores=[], $targets=[],$debug=false) {
+  public function update($targets=[],$ignores=[],$debug=false) {
     if (!static::hasSerial()) $this->checkPKForUpdate();
     $diff = \Trust\Basic::objDiff($this->_oldVals, $this);
     if (!count($diff)) throw new \Exception('Tidak ada perubahan data');
