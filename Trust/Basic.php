@@ -1,4 +1,7 @@
 <?php
+//TODO: WARNING! Updating this to old projects might cause problems:
+//Old behavior: updating null fields will ignore the field.
+//New behavior: null fields will be updated to null. To ignore, must specify ignores.
 namespace Trust;
 class Basic {
   public static function Rp($money=null) {

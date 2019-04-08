@@ -1,4 +1,7 @@
 <?php
+//TODO: WARNING! Updating this to old projects might cause problems:
+//Old behavior: updating null fields will ignore the field.
+//New behavior: null fields will be updated to null. To ignore, must specify ignores.
 namespace Trust;
 use Trust\DB;
 abstract class Model3_1 { //Tambah jsonColumns
@@ -161,14 +164,20 @@ abstract class Model3_1 { //Tambah jsonColumns
     }
   }
   
-  public function update() {
+  //Problem dulu:
+  //- Trust\Basic pakai if(!isset) untuk ignore. --> Nak set null jadi ndak biso.
+  //- Kalau pakai if (!property_exists), nak ignore jadi ndak biso.
+  //Solution: Buat parameter ignores, dan targets
+  //ignores untuk menentukan kolom yang diabaikan. Targets untuk menentukan HANYA kolom target yang mau diupdate.
+  public function update($ignores=[], $targets=[],$debug=false) {
     if (!static::hasSerial()) $this->checkPKForUpdate();
     $diff = \Trust\Basic::objDiff($this->_oldVals, $this);
-    //Kalau di objBaru($this) ndak ada field lama, berarti tidak mau diupdate.
-    if(isset($diff['_removedFields'])) unset ($diff['_removedFields']);
     if (!count($diff)) throw new \Exception('Tidak ada perubahan data');
+    $onlyUpdateTarget = (count($targets) === 0) ? false : true;
     $cols = []; $bindings=[];
     foreach ($diff as $col=>$obj) {
+      if (in_array($col, $ignores)) continue; //ignores fields specified in ignore.
+      if ($onlyUpdateTarget && !in_array($col, $targets)) continue;
       $cols[] = "$col=:$col";
       $bindings[$col] = $obj->new; //Hasil dari objDiff. Ada prop 'new' dan 'old'
     }
@@ -179,6 +188,10 @@ abstract class Model3_1 { //Tambah jsonColumns
     $sql.= implode(', ', $cols);
     $conds = array_map(function($PK) { return "$PK=:old$PK"; }, static::PK());
     $sql.= ' WHERE '.implode(' AND ', $conds);
+//    if ($debug)  {
+//      Debug::print_r($bindings);
+//      die ($sql);
+//    }
     DB::exec($sql, $bindings);
   }
   public function delete() {
