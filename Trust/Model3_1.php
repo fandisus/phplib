@@ -18,7 +18,7 @@ abstract class Model3_1 { //Tambah jsonColumns
   
   protected static $_publicProps;
   protected static function getPublicProps()  {
-//    if (static::$_publicProps != null) return static::$_publicProps;
+    if (static::$_publicProps != null) return static::$_publicProps;
     static::$_publicProps = array_filter(
             get_class_vars(get_called_class()),
             function($propName) { return substr($propName, 0,1) !== '_'; },
