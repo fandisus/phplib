@@ -16,20 +16,22 @@ abstract class Model3_1 { //Tambah jsonColumns
   protected abstract static function jsonColumns();
   const MULTI_INSERT_BATCH_COUNT = 10000;
   
-  protected $_publicProps;
-  protected function getPublicProps()  {
-    if ($this->_publicProps != null) return $this->$_publicProps;
-    $this->_publicProps = array_filter(
-            get_class_vars(get_called_class()),
+  protected static $_publicProps = [];
+  protected static function getPublicProps()  {
+    $class= get_called_class();
+    if (isset(static::$_publicProps[$class])) return static::$_publicProps[$class];
+//    if (static::$_publicProps != null) return static::$_publicProps;
+    static::$_publicProps[$class] = array_filter(
+            get_class_vars($class),
             function($propName) { return substr($propName, 0,1) !== '_'; },
             ARRAY_FILTER_USE_KEY);
-    return $this->_publicProps;
+    return static::$_publicProps[$class];
   }
   public function __construct($props) {
     if (is_object($props)) {
-      foreach ($this->getPublicProps() as $k=>$v) if (isset($props->$k)) $this->$k = $props->$k;
+      foreach (static::getPublicProps() as $k=>$v) if (isset($props->$k)) $this->$k = $props->$k;
     } elseif (is_array($props)) {
-      foreach ($this->getPublicProps() as $k=>$v) if (isset($props[$k])) $this->$k = $props[$k];
+      foreach (static::getPublicProps() as $k=>$v) if (isset($props[$k])) $this->$k = $props[$k];
     }
     //foreach ($obj as $k=>$v) $this->$k = $v; --> Mungkin diubah cak ini bae.
   }
@@ -51,7 +53,7 @@ abstract class Model3_1 { //Tambah jsonColumns
     $obj = new static($row);
     if ($withOldVals) {
       $obj->_oldVals = new \stdClass();
-      foreach ($this->getPublicProps() as $k=>$v) $obj->_oldVals->$k = $row->$k;
+      foreach (static::getPublicProps() as $k=>$v) $obj->_oldVals->$k = $row->$k;
     }
 //    //Dianggap sudah pasti json string. Harus dikonversi ke object/array.
     foreach (static::jsonColumns() as $col) { //UNTESTED
@@ -62,7 +64,7 @@ abstract class Model3_1 { //Tambah jsonColumns
     return $obj;
   }
   
-  public function trim() { foreach ($this->getPublicProps() as $k=>$v) $this->$k = trim($this->$k); }
+  public function trim() { foreach (static::getPublicProps() as $k=>$v) $this->$k = trim($this->$k); }
   public function checkPKForInsert() {
     $bindings = [];
     foreach (static::PK() as $PK) $bindings[$PK] = $this->$PK;
@@ -104,7 +106,7 @@ abstract class Model3_1 { //Tambah jsonColumns
   public function insert() { //Untested for AI
     if (!static::hasSerial()) $this->checkPKForInsert();
     $cols=[]; $bindings=[];
-    $publicProps = $this->getPublicProps();
+    $publicProps = static::getPublicProps();
     if (static::hasSerial()) unset($publicProps[static::PK()[0]]);
     foreach ($publicProps as $col=>$v) {
       $cols[] = ":$col";
@@ -203,7 +205,7 @@ abstract class Model3_1 { //Tambah jsonColumns
     DB::exec($sql, $bindings);
   }
   public function assign($obj) {
-    foreach ($this->getPublicProps() as $k=>$v) if (isset($obj->$k)) $this->$k = $obj->$k;
+    foreach (static::getPublicProps() as $k=>$v) if (isset($obj->$k)) $this->$k = $obj->$k;
   }
   //This allWithOldVals is for getting $_oldVals when using all and allPlus.
   //Be careful with usage. Must to set it to false again after each usage.
