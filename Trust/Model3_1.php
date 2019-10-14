@@ -49,7 +49,8 @@ abstract class Model3_1 { //Tambah jsonColumns
     return static::loadDbRow($baris, true);
   }
   //Cuma tepake kalo nak update. Bareng dengan fungsi find. Kalo select bulky, sebaiknyo ndak dipake
-  protected static function loadDbRow($row, $withOldVals=false) {
+  //Ado fungsi ini supaya kalau multiinsert bikin object ndak ribet bolak balik decode encode row.
+  public static function loadDbRow($row, $withOldVals=false) {
     $obj = new static($row);
     if ($withOldVals) {
       $obj->_oldVals = new \stdClass();
