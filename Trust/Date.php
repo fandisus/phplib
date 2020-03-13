@@ -50,5 +50,10 @@ class Date {
 
   static function fromJavascriptToSQLDate($strDate) { return Date::toSqlDate(Date::fromJavascript($strDate)); }
   static function fromJavascriptToSQLDateTime($strDate) { return Date::toSqlDateTime(Date::fromJavascript($strDate)); }
+  
+  static function getHourFloat($strHour, $tzOffset) {
+    $time = strtotime($strHour);
+    return (($time+($tzOffset*3600)) % 86400)/3600;
+  }
 }
 ?>
